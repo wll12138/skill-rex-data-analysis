@@ -52,3 +52,27 @@ with open(os.path.join(out_dir, "综合报告.md"), "w", encoding="utf-8") as f:
 - **油电转换率** — 优先数据列（`油电转换率`/`油电转换率_修正`），缺失时推算：`密度(kg/m³) / (BSFC / 发电机效率)`
 - **系统效率** — `DC功率 / (油耗 × LHV / 3.6)`，LHV 默认 42.5 MJ/kg
 - **发电机效率** — `DC功率 / (HCU_EngTrq × 转速 / 9549)`
+
+## 维护与发布
+
+本地源文件路径：`~/AppData/Local/hermes/skills/engineering/rex-data-analysis/`
+
+发布至 GitHub：
+
+```bash
+cd ~/AppData/Local/hermes/skills/engineering/rex-data-analysis
+git add -A && git commit -m "<message>"
+git push origin master
+```
+
+仓库地址：`git@github.com:wll12138/skill-rex-data-analysis.git`
+
+## 更新日志
+
+### 2026-06-24
+
+- 初始版本：油电转换效率分析、外特性功率分析、标准对标
+- 支持 .xlsx / .csv 数据加载
+- RE50 标准数据库（SQLite，6 表）
+- 效率 MAP 等高线可视化
+- 报告自动生成原始/修正油电转换率双列
