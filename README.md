@@ -1,0 +1,54 @@
+# rex-data-analysis
+
+增程器总成台架 MAP 数据分析 — 油电转换效率、外特性（WOT）、系统效率、发电功率、标准对标。
+
+## 文件结构
+
+```
+├── SKILL.md                         # 触发条件、快速入口、公式、注意事项
+├── README.md
+├── scripts/
+│   └── rex_analysis.py              # 核心分析模块
+├── references/
+│   ├── rex_signals.md               # 台架列名手册（6 个 sheet 全列名）
+│   └── rex_workflows.md             # 场景化工作流 + 常见问题
+└── assets/
+    └── baseline_rex_database/
+        └── baseline_rex_RE50_database.sqlite  # RE50 标准数据库（6 表）
+```
+
+## 快速使用
+
+```python
+from rex_analysis import *
+
+# 加载数据
+df = load_rex_excel("数据.xlsx", sheet_name="台架原始数据")
+# df = load_rex_excel("数据.csv", encoding="gbk", header_rows=5)  # CSV 也支持
+
+# 一站式分析
+out_dir = make_output_dir("数据.xlsx")
+out = rex_full_analysis("数据.xlsx", sheet_name="台架原始数据")
+with open(os.path.join(out_dir, "综合报告.md"), "w", encoding="utf-8") as f:
+    f.write(out["report"])
+```
+
+## 核心函数
+
+| 函数 | 用途 |
+|------|------|
+| `load_rex_excel` | 加载 .xlsx/.csv，自动识别格式 |
+| `load_rex_csv` | CSV 专用：GBK 编码、多行表头、编码自动探测 |
+| `load_rex_standard` | 加载内置 RE50 标准数据库 |
+| `analyze_fuel_to_electric_efficiency` | 油电转换效率分析 |
+| `analyze_external_characteristic` | 外特性（WOT）功率分析 |
+| `compare_rex_with_standard` | 标准增程器对标 |
+| `rex_full_analysis` | 一站式全分析 |
+| `plot_rex_efficiency_map` | 效率 MAP 等高线图 |
+| `make_output_dir` | 创建输出文件夹 `YYYYMMDD_HHMMSS_<型号>/` |
+
+## 效率公式
+
+- **油电转换率** — 优先数据列（`油电转换率`/`油电转换率_修正`），缺失时推算：`密度(kg/m³) / (BSFC / 发电机效率)`
+- **系统效率** — `DC功率 / (油耗 × LHV / 3.6)`，LHV 默认 42.5 MJ/kg
+- **发电机效率** — `DC功率 / (HCU_EngTrq × 转速 / 9549)`
