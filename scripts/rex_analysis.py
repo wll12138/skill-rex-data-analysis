@@ -19,7 +19,6 @@ from typing import Optional, Dict, Tuple, List, Union
 from datetime import datetime
 import os
 import re
-import json
 
 # ────────────────────────────────────────────────────────────
 # 常量
@@ -604,15 +603,13 @@ def extract_wot_curve(
 
 def analyze_external_characteristic(
     df: pd.DataFrame,
-    standard_df: Optional[pd.DataFrame] = None,
 ) -> Dict:
     """增程器外特性分析。
 
-    提取 WOT 曲线，分析发动机扭矩-功率-发电功率-效率沿外特性的变化。
+    提取 WOT 曲线，分析发动机功率-发电功率-效率沿外特性的变化。
 
     Args:
         df: 增程器 MAP 数据
-        standard_df: 标准增程器外特性数据（可选，用于对标）
 
     Returns:
         dict: wot_table, report
@@ -685,7 +682,7 @@ def analyze_external_characteristic(
         })
 
     # 报告
-    report = _build_wot_report(table, standard_df is not None)
+    report = _build_wot_report(table)
 
     return {
         "wot_table": table,
@@ -693,7 +690,7 @@ def analyze_external_characteristic(
     }
 
 
-def _build_wot_report(table: List[Dict], has_standard: bool = False) -> str:
+def _build_wot_report(table: List[Dict]) -> str:
     """生成外特性报告，重点功率分析。"""
     lines = [
         "=" * 70,
@@ -704,19 +701,20 @@ def _build_wot_report(table: List[Dict], has_standard: bool = False) -> str:
     # ── 功率表 ──
     lines.append("### 功率-效率表")
     lines.append("")
-    lines.append("| RPM | 发动机功率(kW) | 发电功率(kW) | "
+    lines.append("| RPM | 发动机扭矩(Nm) | 发动机功率(kW) | 发电功率(kW) | "
                  "发电机效率(%) | 系统效率(%) | 油电转换率(原始)(kwh/L) | 油电转换率(修正)(kwh/L) |")
-    lines.append("|" + "|".join(["---"] * 7) + "|")
+    lines.append("|" + "|".join(["---"] * 8) + "|")
 
     for r in table:
         vals = [
             str(r["speed"]),
-            f"{r['engine_power']:.1f}" if r["engine_power"] else "-",
-            f"{r['dc_power']:.1f}" if r["dc_power"] else "-",
-            f"{r['gen_efficiency']:.1f}" if r["gen_efficiency"] else "-",
-            f"{r['sys_efficiency']:.1f}" if r["sys_efficiency"] else "-",
+            f"{r['engine_torque']:.1f}" if r.get("engine_torque") else "-",
+            f"{r['engine_power']:.1f}" if r.get("engine_power") else "-",
+            f"{r['dc_power']:.1f}" if r.get("dc_power") else "-",
+            f"{r['gen_efficiency']:.1f}" if r.get("gen_efficiency") else "-",
+            f"{r['sys_efficiency']:.1f}" if r.get("sys_efficiency") else "-",
             f"{r['fuel_elec_rate_raw']:.2f}" if r.get("fuel_elec_rate_raw") else "-",
-            f"{r['fuel_elec_rate']:.2f}" if r["fuel_elec_rate"] else "-",
+            f"{r['fuel_elec_rate']:.2f}" if r.get("fuel_elec_rate") else "-",
         ]
         lines.append("| " + " | ".join(vals) + " |")
 
@@ -909,7 +907,6 @@ def rex_full_analysis(
     sheet_name: str = "台架原始数据",
     fuel_lhv: float = FUEL_LHV_DEFAULT,
     standard_name: Optional[str] = None,
-    save_plot: Optional[str] = None,
 ) -> Dict:
     """增程器一站式全分析。
 
@@ -920,7 +917,6 @@ def rex_full_analysis(
         sheet_name: 数据 sheet 名称
         fuel_lhv: 燃油低热值
         standard_name: 标准增程器名称，None 则使用内置 RE50
-        save_plot: 图表保存路径，None 则不生成
 
     Returns:
         dict: efficiency_result, wot_result, comparison_result, report

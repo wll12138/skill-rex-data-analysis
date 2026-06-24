@@ -62,7 +62,7 @@ print(out["report"])
 ### 外特性分析
 
 ```python
-out = analyze_external_characteristic(df, wot_sheet="功率转速选点")
+out = analyze_external_characteristic(df)
 print(out["report"])
 ```
 
@@ -80,7 +80,6 @@ print(result["report"])
 out = rex_full_analysis(
     filepath="增程器数据.xlsx",
     sheet_name="台架原始数据",
-    save_plot=os.path.join(out_dir, "rex_analysis.png"),
 )
 print(out["report"])
 ```
@@ -104,12 +103,11 @@ print(out["report"])
 > 标注"数据"=直接引用台架导出列；"计算"=代码推算。
 
 ```
-油电转换率 (kwh/L) — 优先数据，缺失时计算
-  数据: 列 "油电转换率"（原始）/ "油电转换率_修正"（台架修正，算法未知）
-  计算: = 密度(kg/m³) / 等效油耗(g/kWh)
+油电转换率 (kwh/L) — 优先数据列，缺失时计算
+  原始: = 密度(kg/m³) / 等效油耗(g/kWh)，公式已验证（与台架导出值一致）
          等效油耗 = BSFC(g/kWh) / 发电机效率(%)
          BSFC = 燃油消耗量(kg/h) × 1000 / 发动机功率(kW)
-         来源: 1000/733 换算式（733=汽油标准密度 kg/m³），化简为密度/等效油耗
+  修正: 台架在原始值基础上的修正
 
 系统效率 (%) — 计算（标准热力学公式，LHV 可配置）
   = 直流功率(kW) / (燃油消耗量(kg/h) × LHV(MJ/kg) / 3.6) × 100
