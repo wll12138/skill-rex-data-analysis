@@ -27,17 +27,38 @@
 ## 快速使用
 
 ```python
+import sys, os
+from pathlib import Path
+
+# 导入
+sys.path.insert(0, str(Path.home() / "AppData/Local/hermes/skills/engineering/rex-data-analysis/scripts"))
 from rex_analysis import *
 
-# 加载数据
-df = load_rex_excel("数据.xlsx", sheet_name="台架原始数据")
-# df = load_rex_excel("数据.csv", encoding="gbk", header_rows=5)  # CSV 也支持
+# 创建输出文件夹
+out_dir = make_output_dir("增程器数据.xlsx")
 
-# 一站式分析
-out_dir = make_output_dir("数据.xlsx")
-out = rex_full_analysis("数据.xlsx", sheet_name="台架原始数据")
-with open(os.path.join(out_dir, "综合报告.md"), "w", encoding="utf-8") as f:
-    f.write(out["report"])
+# 加载数据
+df = load_rex_excel("增程器数据.xlsx", sheet_name="台架原始数据")
+print_data_structure(df)
+
+# 油电转换效率分析
+eff = analyze_fuel_to_electric_efficiency(df)
+with open(os.path.join(out_dir, "效率分析报告.md"), "w", encoding="utf-8") as f:
+    f.write(eff["report"])
+
+# 外特性功率分析
+wot = analyze_external_characteristic(df)
+with open(os.path.join(out_dir, "外特性分析报告.md"), "w", encoding="utf-8") as f:
+    f.write(wot["report"])
+
+# 标准对标
+std = load_rex_standard("台架原始数据")
+cmp = compare_rex_with_standard(df, standard_df=std, name="测试增程器")
+with open(os.path.join(out_dir, "标准对标报告.md"), "w", encoding="utf-8") as f:
+    f.write(cmp["report"])
+
+# 效率 MAP 图
+plot_rex_efficiency_map(df, save_path=os.path.join(out_dir, "效率MAP.png"))
 ```
 
 ## 核心函数
